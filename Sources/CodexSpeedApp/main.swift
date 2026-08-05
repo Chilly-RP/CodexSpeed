@@ -52,6 +52,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var timer: Timer?
     private var ticks = 0
     private var currentSessionURL: URL?
+    private var currentSessionID: String?
+    private var sessionIndexModifiedAt: Date?
     private var fileOffset: UInt64 = 0
     private var lineBuffer = JSONLineBuffer()
     private var estimator = SpeedEstimator()
@@ -91,23 +93,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             item.isEnabled = false
             menu.addItem(item)
         }
-
-        menu.addItem(.separator())
-        let scope = NSMenuItem(
-            title: "口径：精确 output tokens ÷ 模型响应时间",
-            action: nil,
-            keyEquivalent: ""
-        )
-        scope.isEnabled = false
-        menu.addItem(scope)
-
-        let privacy = NSMenuItem(
-            title: "隐私：只解析事件类型、时间和 token 计数",
-            action: nil,
-            keyEquivalent: ""
-        )
-        privacy.isEnabled = false
-        menu.addItem(privacy)
 
         menu.addItem(.separator())
         menu.addItem(
@@ -158,6 +143,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             if latest != currentSessionURL {
                 switchToSession(latest)
             }
+
+            refreshSessionTitleIfNeeded()
         }
 
         guard let currentSessionURL else {
@@ -170,12 +157,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func switchToSession(_ url: URL?) {
         currentSessionURL = url
+        currentSessionID = nil
+        sessionIndexModifiedAt = nil
         fileOffset = 0
         lineBuffer = JSONLineBuffer()
         estimator = SpeedEstimator()
 
         guard let url else { return }
-        sessionItem.title = "任务：\(CodexSessionFiles.shortSessionName(for: url))"
+        let fallbackName = CodexSessionFiles.shortSessionName(for: url)
+        sessionItem.title = "任务：\(fallbackName)"
+        currentSessionID = CodexSessionTitles.sessionID(at: url)
+        refreshSessionTitleIfNeeded(force: true)
 
         let fileSize = (try? url.resourceValues(forKeys: [.fileSizeKey]).fileSize) ?? 0
         let maximumReplayBytes = 8 * 1_024 * 1_024
@@ -196,6 +188,32 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         } catch {
             fileOffset = 0
         }
+    }
+
+    private func refreshSessionTitleIfNeeded(force: Bool = false) {
+        guard let currentSessionURL else { return }
+
+        let resolvedSessionID = currentSessionID
+            ?? CodexSessionTitles.sessionID(at: currentSessionURL)
+        let didResolveSessionID = currentSessionID == nil && resolvedSessionID != nil
+        currentSessionID = resolvedSessionID
+
+        let indexURL = codexHome.appendingPathComponent("session_index.jsonl")
+        let modifiedAt = try? indexURL.resourceValues(
+            forKeys: [.contentModificationDateKey]
+        ).contentModificationDate
+        guard force || didResolveSessionID || modifiedAt != sessionIndexModifiedAt else { return }
+        sessionIndexModifiedAt = modifiedAt
+
+        let fallbackName = CodexSessionFiles.shortSessionName(for: currentSessionURL)
+        let threadName = resolvedSessionID.flatMap {
+            CodexSessionTitles.threadName(for: $0, codexHome: codexHome)
+        }
+        let displayName = CodexSessionTitles.menuDisplayName(
+            threadName: threadName,
+            fallback: fallbackName
+        )
+        sessionItem.title = "任务：\(displayName)"
     }
 
     private func readAppendedData(from url: URL) {

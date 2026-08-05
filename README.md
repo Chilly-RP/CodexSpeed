@@ -2,9 +2,14 @@
 
 CodexSpeed 是一个轻量的原生 macOS 菜单栏应用，用于显示最近活跃 Codex 任务的模型输出速度：`xx.x tokens/s`。
 
+## 界面预览
+
+![CodexSpeed 菜单栏输出速度](docs/images/codexspeed-menubar.png)
+
 ## 功能
 
 - 自动跟随最近有写入的 Codex 本地任务。
+- 显示最近活跃任务的 Codex 对话标题，标题不可用时回退到任务短标识。
 - 使用 Codex 记录的精确 `last_token_usage.output_tokens`，不以字符数估算 token。
 - 每 250 ms 检查会话增量，并在模型 usage 落盘后刷新菜单栏。
 - 测量模型响应的墙钟时间，排除工具执行耗时和两轮之间的空闲时间。
@@ -25,7 +30,7 @@ Codex 桌面应用目前不会把逐 token delta 写入本地会话 JSONL，因�
 
 ## 隐私
 
-应用只提取本地 JSONL 记录中的事件类型、时间戳、角色和 token 计数。它不会展示、保存或上传提示词、回复正文、工具参数和工具输出，也不会修改 `~/.codex/config.toml`。
+应用只提取本地会话事件中的类型、时间戳、角色和 token 计数，以及本地会话索引中的对话标题。标题只显示在本机菜单中；应用不会提取、展示、保存或上传提示词、回复正文、工具参数和工具输出，也不会修改 `~/.codex/config.toml`。
 
 ## 系统要求
 

@@ -5,6 +5,7 @@ let tests: [(String, () throws -> Void)] = [
     ("SessionEvent", sessionEventTests),
     ("SpeedEstimator", speedEstimatorTests),
     ("SessionFiles", sessionFilesTests),
+    ("SessionTitle", sessionTitleTests),
 ]
 
 var failures = 0
