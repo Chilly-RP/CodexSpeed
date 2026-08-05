@@ -17,6 +17,7 @@ fi
 mkdir -p "${app_path}/Contents/MacOS" "${app_path}/Contents/Resources"
 cp "${binary_dir}/CodexSpeed" "${app_path}/Contents/MacOS/CodexSpeed"
 cp "${project_root}/Resources/Info.plist" "${app_path}/Contents/Info.plist"
+cp "${project_root}/LICENSE" "${app_path}/Contents/Resources/LICENSE"
 chmod 755 "${app_path}/Contents/MacOS/CodexSpeed"
 xattr -cr "${app_path}"
 codesign --force --deep --sign - "${app_path}"
