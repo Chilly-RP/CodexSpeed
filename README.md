@@ -1,10 +1,22 @@
 # CodexSpeed
 
+[![CI](https://github.com/Chilly-RP/CodexSpeed/actions/workflows/ci.yml/badge.svg)](https://github.com/Chilly-RP/CodexSpeed/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/Chilly-RP/CodexSpeed)](https://github.com/Chilly-RP/CodexSpeed/releases/latest)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
 CodexSpeed 是一个轻量的原生 macOS 菜单栏应用，用于显示最近活跃 Codex 任务的模型输出速度：`xx.x tokens/s`。
 
 ## 界面预览
 
 ![CodexSpeed 菜单栏输出速度](docs/images/codexspeed-menubar.png)
+
+## 安装
+
+1. 从 [Releases](https://github.com/Chilly-RP/CodexSpeed/releases/latest) 下载 `CodexSpeed-v0.1.0-macOS-arm64.zip`。
+2. 解压后将 `CodexSpeed.app` 拖入“应用程序”目录。
+3. 首次启动时，在 Finder 中右键点击应用并选择“打开”。
+
+当前发布包支持 Apple Silicon（arm64）和 macOS 13 及以上版本。应用使用临时签名，尚未进行 Apple Developer ID 签名与公证，因此不适用于免提示的商业分发。
 
 ## 功能
 
@@ -76,3 +88,7 @@ Tests/CodexSpeedCoreTests/   无外部测试框架的核心测试
 Resources/                   App bundle 元数据
 scripts/package.sh           Release 构建与本地签名打包
 ```
+
+## 许可证
+
+本项目基于 [MIT License](LICENSE) 开源。
