@@ -12,7 +12,7 @@ CodexSpeed 是一个轻量的原生 macOS 菜单栏应用，用于显示最近�
 
 ## 安装
 
-1. 从 [Releases](https://github.com/Chilly-RP/CodexSpeed/releases/latest) 下载 `CodexSpeed-v0.1.1-macOS-arm64.zip`。
+1. 从 [Releases](https://github.com/Chilly-RP/CodexSpeed/releases/latest) 下载 `CodexSpeed-v0.1.2-macOS-arm64.zip`。
 2. 解压后将 `CodexSpeed.app` 拖入“应用程序”目录。
 3. 首次启动时，在 Finder 中右键点击应用并选择“打开”。
 
