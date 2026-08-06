@@ -20,4 +20,11 @@ func sessionEventTests() throws {
         payloadType: "custom_tool_call_output"
     )
     try expect(!toolOutput.isModelOutput, "tool output must not extend model response time")
+
+    let taskCompleteLine = Data(#"{"timestamp":"2026-08-05T06:25:39.000Z","type":"event_msg","payload":{"type":"task_complete"}}"#.utf8)
+    let taskComplete = try require(
+        SessionEvent.parse(line: taskCompleteLine),
+        "task_complete event should parse"
+    )
+    try expect(taskComplete.completesTask, "task_complete should mark the task idle")
 }

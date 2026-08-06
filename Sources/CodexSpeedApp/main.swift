@@ -79,9 +79,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func configureStatusItem() {
         guard let button = statusItem.button else { return }
-        button.title = "— tokens/s"
+        button.title = "空闲"
         button.font = NSFont.monospacedDigitSystemFont(ofSize: NSFont.systemFontSize, weight: .medium)
-        button.toolTip = "Codex 最近一次模型响应的平均输出速度"
+        button.toolTip = "Codex 当前没有运行中的响应"
     }
 
     private func configureMenu() {
@@ -247,15 +247,35 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func consume(_ data: Data) {
         for line in lineBuffer.append(data) {
             guard let event = SessionEvent.parse(line: line) else { continue }
+
+            if event.startsTask || event.startsUserTurn {
+                displayActive()
+            }
+
             if let sample = estimator.consume(event) {
                 display(sample)
             }
+
+            if event.completesTask {
+                displayIdle()
+            }
         }
+    }
+
+    private func displayActive() {
+        statusItem.button?.title = "响应中…"
+        statusItem.button?.toolTip = "Codex 正在生成响应"
+    }
+
+    private func displayIdle() {
+        statusItem.button?.title = "空闲"
+        statusItem.button?.toolTip = "Codex 当前没有运行中的响应"
     }
 
     private func display(_ sample: SpeedSample) {
         let speed = sample.tokensPerSecond
         statusItem.button?.title = String(format: "%.1f tokens/s", speed)
+        statusItem.button?.toolTip = "Codex 最近一次模型响应的平均输出速度"
         speedItem.title = String(format: "最近响应：%.1f tokens/s", speed)
         detailItem.title = String(
             format: "输出：%d tokens · %.1f 秒",
