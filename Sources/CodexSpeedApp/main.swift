@@ -62,13 +62,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         configureStatusItem()
         configureMenu()
         poll()
-        timer = Timer.scheduledTimer(
+        let pollTimer = Timer(
             timeInterval: 0.25,
             target: self,
             selector: #selector(timerFired),
             userInfo: nil,
             repeats: true
         )
+        RunLoop.main.add(pollTimer, forMode: .common)
+        timer = pollTimer
     }
 
     func applicationWillTerminate(_ notification: Notification) {
