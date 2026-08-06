@@ -5,6 +5,41 @@ func sessionFilesTests() throws {
     let url = CodexSessionFiles.codexHome(environment: ["CODEX_HOME": "/tmp/codex-test-home"])
     try expectEqual(url.path, "/tmp/codex-test-home", "CODEX_HOME support")
 
+    do {
+        let temporaryRoot = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+        let codexHome = temporaryRoot.appendingPathComponent(".codex", isDirectory: true)
+        let sessions = codexHome.appendingPathComponent("sessions", isDirectory: true)
+        let oldDay = sessions.appendingPathComponent("2026/08/04", isDirectory: true)
+        let today = sessions.appendingPathComponent("2026/08/06", isDirectory: true)
+        try FileManager.default.createDirectory(at: oldDay, withIntermediateDirectories: true)
+        try FileManager.default.createDirectory(at: today, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: temporaryRoot) }
+
+        let resumedSession = oldDay.appendingPathComponent("resumed.jsonl")
+        let currentSession = today.appendingPathComponent("current.jsonl")
+        try Data("resumed\n".utf8).write(to: resumedSession)
+        try Data("current\n".utf8).write(to: currentSession)
+
+        let now = Date(timeIntervalSince1970: 1_785_982_400)
+        try FileManager.default.setAttributes(
+            [.modificationDate: now.addingTimeInterval(-1)],
+            ofItemAtPath: resumedSession.path
+        )
+        try FileManager.default.setAttributes(
+            [.modificationDate: now.addingTimeInterval(-60)],
+            ofItemAtPath: currentSession.path
+        )
+
+        try expectEqual(
+            CodexSessionFiles.latestSessionFile(
+                codexHome: codexHome
+            )?.lastPathComponent,
+            resumedSession.lastPathComponent,
+            "a resumed session from an older date directory should remain discoverable"
+        )
+    }
+
     var buffer = JSONLineBuffer()
     try expectEqual(buffer.append(Data("one\ntw".utf8)).map(utf8), ["one"], "first partial append")
     try expectEqual(

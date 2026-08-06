@@ -1,3 +1,4 @@
+import Darwin
 import Foundation
 
 public enum CodexSessionFiles {
@@ -19,29 +20,7 @@ public enum CodexSessionFiles {
         fileManager: FileManager = .default
     ) -> URL? {
         let sessions = codexHome.appendingPathComponent("sessions", isDirectory: true)
-        let candidates = [now, calendar.date(byAdding: .day, value: -1, to: now)].compactMap { $0 }
-
-        for date in candidates {
-            let components = calendar.dateComponents([.year, .month, .day], from: date)
-            guard
-                let year = components.year,
-                let month = components.month,
-                let day = components.day
-            else {
-                continue
-            }
-
-            let dayDirectory = sessions
-                .appendingPathComponent(String(format: "%04d", year), isDirectory: true)
-                .appendingPathComponent(String(format: "%02d", month), isDirectory: true)
-                .appendingPathComponent(String(format: "%02d", day), isDirectory: true)
-
-            if let latest = latestJSONL(in: dayDirectory, fileManager: fileManager) {
-                return latest
-            }
-        }
-
-        return nil
+        return latestJSONL(in: sessions, fileManager: fileManager)
     }
 
     public static func shortSessionName(for url: URL) -> String {
@@ -51,28 +30,33 @@ public enum CodexSessionFiles {
     }
 
     private static func latestJSONL(in directory: URL, fileManager: FileManager) -> URL? {
-        guard let urls = try? fileManager.contentsOfDirectory(
-            at: directory,
-            includingPropertiesForKeys: [.contentModificationDateKey, .isRegularFileKey],
-            options: [.skipsHiddenFiles]
-        ) else {
+        guard let enumerator = fileManager.enumerator(atPath: directory.path) else {
             return nil
         }
 
-        return urls
-            .filter { $0.pathExtension == "jsonl" }
-            .compactMap { url -> (URL, Date)? in
-                guard
-                    let values = try? url.resourceValues(forKeys: [.contentModificationDateKey, .isRegularFileKey]),
-                    values.isRegularFile == true,
-                    let modified = values.contentModificationDate
-                else {
-                    return nil
-                }
-                return (url, modified)
+        var latest: (url: URL, modifiedAt: timespec)?
+        while let relativePath = enumerator.nextObject() as? String {
+            guard relativePath.hasSuffix(".jsonl") else { continue }
+
+            let path = directory.appendingPathComponent(relativePath).path
+            var fileInfo = stat()
+            guard
+                lstat(path, &fileInfo) == 0,
+                fileInfo.st_mode & S_IFMT == S_IFREG
+            else {
+                continue
             }
-            .max { $0.1 < $1.1 }?
-            .0
+
+            let modifiedAt = fileInfo.st_mtimespec
+            if latest == nil || isLater(modifiedAt, than: latest!.modifiedAt) {
+                latest = (URL(fileURLWithPath: path), modifiedAt)
+            }
+        }
+        return latest?.url
+    }
+
+    private static func isLater(_ lhs: timespec, than rhs: timespec) -> Bool {
+        lhs.tv_sec > rhs.tv_sec || (lhs.tv_sec == rhs.tv_sec && lhs.tv_nsec > rhs.tv_nsec)
     }
 }
 
